@@ -1,0 +1,7 @@
+---
+title: "Homework 6"
+author: "Xiangyi Liu (xl3048)"
+date: "11/30/2020"
+output: github_document
+---
+
