@@ -101,6 +101,28 @@ anova(mod_null, my_mod) %>%
   broom::tidy()
 
 ```
+I began the problem by first looking at the performance of Model 1 and Model 2 (specified in the problem) and plot their RMSE using violin plot. Found out Model 2 had lower RMSE and performed better than Model 1.\
+Thus, I built my own model based on predictors included in Model 2. I tried a couple of combinations of predictors that I hypothesized to have indicative ability to birth weight and used ANOVA to compare two nested model. \
+The null hypothesis is the full (my model) and the reduced model (Model 2) do not differ significantly; the alternative hypothesis is the full model is significantly better.\
+The p-value shown in the ANOVA summary table above is very low (reject H0), meaning my model has significantly better performance than Model 2.
+
+```{r, message=F, warning=F}
+resid <- add_residuals(data = bwt_df, model = my_mod) %>% select(resid)
+p<-add_predictions(data = bwt_df, model = my_mod) %>% cbind(resid) %>%
+  select(pred,resid) %>%
+  ggplot(aes(x = pred, y = resid)) + geom_point(color = "lightblue")+
+  labs(title = "Residual vs Fitted Values", x = "Fitted Values", y= "Residuals")
+p
+```
+Looks like the majority of residuals clustered in the range between -1000 to 1000. This may be caused by the original dataset does not uniformly distributed.\
+Zoom in the plot...
+
+```{r}
+p+xlim(1500,4500) + ylim(-1500,1500)
+```
+
+As we expect to see, residual values bounce around zero (expected value is 0); residuals form a horizontal band around zero: above and below (indication of equal variance).
+
 
 
 ```{r cv, warning=F}
@@ -124,7 +146,7 @@ cv_df =
     rmse_2 = map2_dbl(.x=mod_2, .y=test, ~rmse(model = .x, data = .y)),
     rmse_my = map2_dbl(.x = mod_3, .y=test, ~rmse(model = .x, data = .y))
     )
-#cv_df
+cv_df %>% select(starts_with("rmse_"))%>%knitr::kable(digits = 3)
 
 
 cv_df %>% 
@@ -135,8 +157,13 @@ cv_df %>%
     values_to = "rmse",
     names_prefix = "rmse_") %>% 
   mutate(model = fct_inorder(model)) %>% 
-  ggplot(aes(x = model, y = rmse)) + geom_violin()
+  ggplot(aes(x = model, y = rmse,color = model)) + geom_violin()+
+  labs(title = "Model Comparison")
 ```
+
+Model 1: using length at birth and gestational age as predictors (main effects only)\
+Model 2: using head circumference, length, sex, and all interactions (including the three-way interaction) between these\
+My Model: besides variables (and their interactions) used in Model 2, I added smoking status (_smoken_), previous number of low birth weight babies (_pnumlbw_), family monthly income (_fincome_), mother's pre-pregnancy BMI (_ppbmi_), and the interaction between _fincome_ and _ppbmi_.Smoking status of mother during pregnancy is a crucial factor on the health of the baby, so I decided to include it in the model. Also, the family income is relevant to the health and weight of the mother, and sequentially the health and weight of the new born. The family income should have some interaction with mother's BMI before pregnancy.
 
 
 
