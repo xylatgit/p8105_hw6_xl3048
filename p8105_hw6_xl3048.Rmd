@@ -5,11 +5,12 @@ date: "11/30/2020"
 output: github_document
 ---
 
-```{r setup}
+```{r setup, message=F}
 library(tidyverse)
 library(modelr)
 library(p8105.datasets)
 library(mgcv)
+library(broom)
 ```
 
 ## Problem 1
@@ -165,6 +166,83 @@ Model 1: using length at birth and gestational age as predictors (main effects o
 Model 2: using head circumference, length, sex, and all interactions (including the three-way interaction) between these\
 My Model: besides variables (and their interactions) used in Model 2, I added smoking status (_smoken_), previous number of low birth weight babies (_pnumlbw_), family monthly income (_fincome_), mother's pre-pregnancy BMI (_ppbmi_), and the interaction between _fincome_ and _ppbmi_.Smoking status of mother during pregnancy is a crucial factor on the health of the baby, so I decided to include it in the model. Also, the family income is relevant to the health and weight of the mother, and sequentially the health and weight of the new born. The family income should have some interaction with mother's BMI before pregnancy.
 
+
+
+## Problem 3
+
+```{r p3_data, message=F}
+weather_df = 
+  rnoaa::meteo_pull_monitors(
+    c("USW00094728"),
+    var = c("PRCP", "TMIN", "TMAX"), 
+    date_min = "2017-01-01",
+    date_max = "2017-12-31") %>%
+  mutate(
+    name = recode(id, USW00094728 = "CentralPark_NY"),
+    tmin = tmin / 10,
+    tmax = tmax / 10) %>%
+  select(name, id, everything())
+```
+
+
+```{r}
+boot_sample = function(df) {
+  sample_frac(df, replace = TRUE)
+}
+
+boot_straps = 
+  data_frame(
+    strap_number = 1:5000,
+    strap_sample = rerun(5000, boot_sample(weather_df))
+  )
+
+boot_straps
+```
+
+Make some plot to do a quick check on bootstrap samples.
+```{r}
+boot_straps %>% 
+  filter(strap_number %in% 1:3) %>% 
+  unnest(strap_sample) %>% 
+  ggplot(aes(x = tmin, y = tmax)) + 
+  geom_point(alpha = .5) +
+  stat_smooth(method = "lm", se = FALSE) +
+  facet_grid(~strap_number) 
+```
+That looks about right. In comparison with the original data, the bootstrap sample has the same characteristics but isn’t a perfect duplicate – some original data points appear more than once, others don’t appear at all.
+
+```{r analyze bootstrap samples}
+bootstrap_results = 
+  boot_straps %>% 
+  mutate(
+    models = map(strap_sample, ~lm(tmax ~ tmin, data = .x) ),
+    results = map(models, broom::tidy)) %>% 
+  select(-strap_sample) %>% 
+  unnest(results) 
+
+bootstrap_coeff <- map(.x = bootstrap_results$models, ~glance(.x))
+
+
+
+
+bootstrap_results %>% 
+  group_by(term) %>% 
+  summarize(boot_se = sd(estimate)) %>% 
+  knitr::kable(digits = 3)
+```
+
+
+```{r}
+df.h = data.frame( 
+  hour     = factor(rep(1:24, each = 21)),
+  price    = runif(504, min = -10, max = 125),
+  wind     = runif(504, min = 0, max = 2500),
+  temp     = runif(504, min = - 10, max = 25)  
+)
+
+dfHour = df.h %>% group_by(hour) %>%
+  do(fitHour = lm(price ~ wind + temp, data = .))
+```
 
 
 
