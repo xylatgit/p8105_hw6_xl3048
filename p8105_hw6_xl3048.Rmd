@@ -221,7 +221,7 @@ bootstrap_results =
 
 bootstrap_coeff <- map(.x = bootstrap_results$models, ~glance(.x))
 
-r_sqr<-sapply(bootstrap_coeff, "[[", 1)
+r_sqr<-sapply(bootstrap_coeff, "[[", 1) 
 
 
 bootstrap_results = bootstrap_results %>%
@@ -235,19 +235,33 @@ bootstrap_results %>%
   knitr::kable(digits = 3)
 ```
 
-
 ```{r}
-df.h = data.frame( 
-  hour     = factor(rep(1:24, each = 21)),
-  price    = runif(504, min = -10, max = 125),
-  wind     = runif(504, min = 0, max = 2500),
-  temp     = runif(504, min = - 10, max = 25)  
-)
+log_val<- bootstrap_results %>%
+  select(strap_number,term, estimate) %>%
+  pivot_wider(
+    names_from = term,
+    values_from = estimate
+  ) %>%
+  mutate(
+    log_value = log(`(Intercept)`*tmin)
+  ) %>% select(log_value)
 
-dfHour = df.h %>% group_by(hour) %>%
-  do(fitHour = lm(price ~ wind + temp, data = .))
 ```
 
 
 
+```{r r sqr plot}
+r_sqr <- as.data.frame(r_sqr)
+ggplot(r_sqr, aes(x=r_sqr)) + 
+    geom_density(alpha=.2, fill="#FF6666")+
+  labs(title = "Distribution of R-Squared", x= "R-Squared")
+```
+
+```{r log plot}
+log_val %>% ggplot(aes(x=log_value))+ 
+    geom_density(alpha=.2, fill="lightblue")+
+  labs(title = "Distribution of log(b^1*b^0)", x= "log(b^1*b^0)")
+```
+
+The distribution of 5000 r-squared (mean slightly above 0.91) and log(b^1*b^0) (mean slightly above 2.00) values from 5000 bootstrap samples is fairly normal. 
 
