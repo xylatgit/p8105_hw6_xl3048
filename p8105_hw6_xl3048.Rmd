@@ -265,3 +265,29 @@ log_val %>% ggplot(aes(x=log_value))+
 
 The distribution of 5000 r-squared (mean slightly above 0.91) and log(b^1*b^0) (mean slightly above 2.00) values from 5000 bootstrap samples is fairly normal. 
 
+
+```{r CI}
+
+ci <- data.frame(
+  x = c(quantile(as.data.frame(r_sqr)$r_sqr, 0.025), quantile(as.data.frame(r_sqr)$r_sqr, 0.975)),
+  y = c(quantile(log_val$log_value, 0.025), quantile(log_val$log_value, 0.975))
+)
+
+rownames(ci) <- c("ci_lower","ci_upper")
+colnames(ci) <- c("r-squared", "log(b^1 * b^0)")
+
+ci %>%  knitr::kable(digits = 3)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
