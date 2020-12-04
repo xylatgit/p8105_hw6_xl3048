@@ -262,8 +262,7 @@ log_val %>% ggplot(aes(x=log_value))+
     geom_density(alpha=.2, fill="lightblue")+
   labs(title = "Distribution of log(b^1*b^0)", x= "log(b^1*b^0)")
 ```
-
-The distribution of 5000 r-squared (mean slightly above 0.91) and log(b^1*b^0) (mean slightly above 2.00) values from 5000 bootstrap samples is fairly normal. 
+The shape of two plots are approximately bell-shaped. The mean for R-squared is slightly greater than 0.91, implies to majority of models across bootstrap samples has a good fit. The mean for log(b^1 * b^0) is slightly below 2.025. The peak at the mean makes it slightly departures from a normal distribution.
 
 
 ```{r CI}
