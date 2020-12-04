@@ -217,12 +217,16 @@ bootstrap_results =
   mutate(
     models = map(strap_sample, ~lm(tmax ~ tmin, data = .x) ),
     results = map(models, broom::tidy)) %>% 
-  select(-strap_sample) %>% 
-  unnest(results) 
+  select(-strap_sample)
 
 bootstrap_coeff <- map(.x = bootstrap_results$models, ~glance(.x))
 
+r_sqr<-sapply(bootstrap_coeff, "[[", 1)
 
+
+bootstrap_results = bootstrap_results %>%
+  select(-models) %>% 
+  unnest(results) 
 
 
 bootstrap_results %>% 
